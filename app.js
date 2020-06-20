@@ -1,51 +1,52 @@
 /**
  * Module dependencies.
- */
-var express        = require('express'),
-    connect        = require('connect'),
-    cookie         = require('cookie'),
-    app            = express(),
-    server         = require('http').createServer(app),
-    io             = require('socket.io').listen(server),
-    path           = require('path'),
-    port           = process.env.PORT || 8080,
-    sessionStore   = new connect.middleware.session.MemoryStore(),
-    sessionSecret  = "some private string",
-    cookieParser   = express.cookieParser(sessionSecret),
-    SessionSockets = require('session.socket.io'),
-    sessionSockets = new SessionSockets(io, sessionStore, cookieParser);
+    var io = require('socket.io').listen(http);
+*/
 
+var http = require('http');
+var express = require('express');
+var routes = require('./routes');
+var path = require('path');
+var io = require('socket.io').listen(http);
+SessionSockets = require('session.socket.io'),
+    sessionSockets = new SessionSockets(io);
 
-// configure express
-app.configure(function () {
-    app.set('port',  port);
-    app.set('views', __dirname + '/views');
-    app.set('view engine', 'jade');
-    app.use(express.static(path.join(__dirname, 'public')));
-    app.use(express.methodOverride());
+var favicon = require('serve-favicon');
+var logger = require('morgan');
+var methodOverride = require('method-override');
+var session = require('express-session');
+var bodyParser = require('body-parser');
+var multer = require('multer');
+var errorHandler = require('errorhandler');
 
-    app.use(express.favicon());
-    app.use(express.logger('dev'));
-    app.use(cookieParser);
+var app = express();
 
-    app.use(express.session({"store": sessionStore }));
-    app.use(express.json());
-    app.use(express.urlencoded());
-
-    app.use(app.router);
-});
+// all environments
+app.set('port', process.env.PORT || 8080);
+app.set('views', path.join(__dirname, 'views'));
+app.set('view engine', 'pug');
+app.use(favicon(__dirname + '/public/favicon.ico'));
+app.use(logger('dev'));
+app.use(methodOverride());
+app.use(session({ resave: true,
+                  saveUninitialized: true,
+                  secret: 'uwotm8' }));
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true }));
+//app.use(multer()); - use to upload files
+app.use(express.static(path.join(__dirname, 'public')));
 
 /**
  * Routing
  */
-require('./routes/index.js')(app, sessionStore);
+require('./routes/index.js')(app);
 
 
 /**
  * Configure Sockets
  */
 io.set('log level', 2);
-io.set('transports', [ 'websocket', 'xhr-polling' ]);
+
 //io.set('close timeout', 10);
 
 io.set('authorization', function (handshakeData, callback) {
@@ -101,5 +102,7 @@ sessionSockets.on('connection', function(err, socket, session){
 
 
 //launch server
-server.listen(port);
-console.log('Express server listening on port ' + port);
+var server = http.createServer(app);
+server.listen(app.get('port'), function(){
+  console.log('Express server listening on port ' + app.get('port'));
+});

@@ -1,7 +1,7 @@
 var _            = require('underscore'),
     path         = require('path'),
     main         = require('../models/main.js'),
-    uuid         = require('node-uuid'),
+    uuid         = require('uuid'),
     userRoles    = require('../public/js/routingConfig').userRoles,
     accessLevels = require('../public/js/routingConfig').accessLevels;
 
